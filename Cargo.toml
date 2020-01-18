@@ -1,0 +1,27 @@
+[package]
+name = "rkdbavro"
+version = "0.1.0"
+authors = ["Ajay Rathore <rathore.ajay@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+rkdb = "0.4.0"
+avro-rs = "0.6"
+failure = "0.1.5"
+serde = { version = "1.0", features = ["derive"] }
+
+[build-dependencies]
+rkdb = "*"
+avro-rs = "*"
+
+[lib]
+name = "rkdbavro"
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = 3
+debug = true
+rpath = false
+lto = false
+debug-assertions = false
+codegen-units = 1
