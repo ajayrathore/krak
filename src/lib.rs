@@ -4,6 +4,6 @@
 extern crate avro_rs;
 extern crate rkdb;
 
-pub mod myschema;
+pub mod schema;
 pub mod encoder;
 pub mod decoder;

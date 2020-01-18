@@ -1,4 +1,4 @@
-use crate::myschema::*;
+use crate::schema::*;
 use rkdb::{kbindings::*, types::*};
 use avro_rs::{Codec, Schema, Writer};
 
@@ -53,19 +53,7 @@ pub extern "C" fn encode_table(tbl: *const K, rows: *const K) -> *const K {
 
 
 fn encode_trades(trades: &Vec<Trade>) -> Vec<u8>  {
-    let raw_schema = r#"
-            {
-                "type": "record",
-                "name": "trade",
-                "fields": [
-                    {"name": "sid", "type": "int"},
-                    {"name": "sym", "type": "string"},
-                    {"name": "price", "type": "double"},
-                    {"name": "size", "type": "long"}
-                ]
-            }
-        "#;
-    let schema = Schema::parse_str(raw_schema).unwrap();
+    let schema = Schema::parse_str(RAW_SCHEMA).unwrap();
     let mut writer = Writer::with_codec(&schema, Vec::new(), Codec::Deflate);
 
     for trade in trades.into_iter(){
@@ -82,6 +70,7 @@ mod tests {
     use super::*;
     use failure::_core::fmt::Error;
     use avro_rs::types::Record;
+    use avro_rs::{Reader, from_value};
 
     #[test]
     fn test_avro_rw() -> Result<(), Error> {
