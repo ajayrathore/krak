@@ -7,12 +7,12 @@ edition = "2018"
 [dependencies]
 rkdb = "0.4.0"
 avro-rs = "0.6"
+schema_registry_converter = "1.1.0"
+kafka = "0.8.0"
 failure = "0.1.5"
 serde = { version = "1.0", features = ["derive"] }
+lazy_static = "1.4.0"
 
-[build-dependencies]
-rkdb = "*"
-avro-rs = "*"
 
 [lib]
 name = "rkdbavro"

@@ -1,11 +1,13 @@
 use crate::schema::*;
 use rkdb::{kbindings::*, types::*};
 use avro_rs::{Codec, Schema, Writer};
+use schema_registry_converter::schema_registry::SubjectNameStrategy;
+use schema_registry_converter::Encoder;
 
 
 #[no_mangle]
-pub extern "C" fn encode_table(tbl: *const K, rows: *const K) -> *const K {
-    let mut result = kvoid();
+pub extern "C" fn encode_table(tbl: *const K, rows: *const K) -> Vec<Vec<u8>> {
+    let mut result : Vec<Vec<u8>> = Vec::new();
     let mut nr = 0;
     match KVal::new(rows) {
         KVal::Int(KData::Atom(r)) => nr=*r,
@@ -34,11 +36,9 @@ pub extern "C" fn encode_table(tbl: *const K, rows: *const K) -> *const K {
                                         _ => println!("Unrecognized Col")
                                     }
                                 }
-                                //println!("record = {:?}", record);
                                 records.push(record);
                             }
-                            let encoded = encode_trades(&records);
-                            result = klist(4, &encoded[..])
+                            result = encode_trades_with_schema_registry(&records);
                         },
                         _ => println!("No cols found")
                     }
@@ -52,16 +52,15 @@ pub extern "C" fn encode_table(tbl: *const K, rows: *const K) -> *const K {
 }
 
 
-fn encode_trades(trades: &Vec<Trade>) -> Vec<u8>  {
-    let schema = Schema::parse_str(RAW_SCHEMA).unwrap();
-    let mut writer = Writer::with_codec(&schema, Vec::new(), Codec::Deflate);
-
+pub(crate) fn encode_trades_with_schema_registry(trades: &Vec<Trade>) -> Vec<Vec<u8>>  {
+    let value_strategy = SubjectNameStrategy::TopicNameStrategy("trade".into(), false);
+    let mut encoder = Encoder::new("localhost:8081".to_string());
+    let mut bytes : Vec<Vec<u8>> = Vec::new();
     for trade in trades.into_iter(){
-        writer.append_ser(trade).unwrap();
+        let encoded = encoder.encode_struct(trade, &value_strategy);
+        bytes.push(encoded.unwrap());
     }
-    writer.flush().unwrap();
-    let encoded = writer.into_inner();
-    encoded
+    bytes
 }
 
 
@@ -71,6 +70,7 @@ mod tests {
     use failure::_core::fmt::Error;
     use avro_rs::types::Record;
     use avro_rs::{Reader, from_value};
+    use schema_registry_converter::Decoder;
 
     #[test]
     fn test_avro_rw() -> Result<(), Error> {
@@ -111,8 +111,36 @@ mod tests {
         let reader = Reader::with_schema(&schema, &input[..]).unwrap();
 
         for record in reader {
-            println!("{:?}", from_value::<Test>(&record?));
+            println!("{:?}", from_value::<Test>(&record.unwrap()).unwrap());
         }
+        Ok(())
+    }
+
+    #[test]
+    fn test_encodedecode_trades() -> Result<(), Error> {
+        let trade1 = Trade {
+            sid: 1,
+            sym: String::from("msft"),
+            price: 22.4f64,
+            size: 786i64
+        };
+
+        let trade2 = Trade {
+            sid: 2,
+            sym: String::from("hsbc"),
+            price: 99.4f64,
+            size: 654i64
+        };
+
+        let trades = vec![trade1, trade2];
+        let payload = encode_trades_with_schema_registry(&trades);
+        println!("payload : {:?}", payload);
+        let mut decoder = Decoder::new("localhost:8081".to_string());
+        for bytes in payload{
+            let res = decoder.decode(Some(&bytes)).unwrap();
+            println!("Decoded : {:?}", res);
+        }
+
         Ok(())
     }
 }
