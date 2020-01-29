@@ -3,6 +3,7 @@ use rkdb::{kbindings::*, types::*};
 use avro_rs::{Codec, Schema, Writer};
 use schema_registry_converter::schema_registry::SubjectNameStrategy;
 use schema_registry_converter::Encoder;
+use avro_rs::types::Value;
 
 
 #[no_mangle]
@@ -16,32 +17,28 @@ pub extern "C" fn encode_table(tbl: *const K, rows: *const K) -> Vec<Vec<u8>> {
     match KVal::new(tbl) {
         KVal::Table(box b) => {
             match b {
-                KVal::Dict(_, box v) => {
-                    match v {
-                        KVal::Mixed(cols) => {
-                            let mut records : Vec<Trade> = Vec::new();
-                            for i in 0..nr{
-                                let mut record : Trade = Default::default();
-                                for col in cols.iter(){
-                                    match col {
-                                        KVal::Int(KData::List(ic)) => record.sid = (ic)[i as usize],
-                                        KVal::Mixed(symbols) => {
-                                            match symbols[i as usize] {
-                                                KVal::String(syf) => record.sym = syf.parse().unwrap(),
-                                                _ => println!("No string symbol")
-                                            }
-                                        },
-                                        KVal::Float(KData::List(pc)) => record.price = pc[i as usize],
-                                        KVal::Long(KData::List(sc)) => record.size = sc[i as usize],
-                                        _ => println!("Unrecognized Col")
+                KVal::Dict(box KVal::Symbol(KData::List(k)), box KVal::Mixed(cols)) => {
+                    let mut records : Vec<Trade> = Vec::new();
+                    for i in 0..nr{
+                        //let mut mrecord : Vec<(&'static str, Value)> = Vec::new();
+                        let mut record : Trade = Default::default();
+                        for (index, col) in cols.iter().enumerate(){
+                            match col {
+                                KVal::Int(KData::List(ic)) => record.sid = (ic)[i as usize],
+                                KVal::Mixed(symbols) => {
+                                    match symbols[i as usize] {
+                                        KVal::String(syf) => record.sym = syf.parse().unwrap(),
+                                        _ => println!("No string symbol")
                                     }
-                                }
-                                records.push(record);
+                                },
+                                KVal::Float(KData::List(pc)) => record.price = pc[i as usize],
+                                KVal::Long(KData::List(sc)) => record.size = sc[i as usize],
+                                _ => println!("Unrecognized Col")
                             }
-                            result = encode_trades_with_schema_registry(&records);
-                        },
-                        _ => println!("No cols found")
+                        }
+                        records.push(record);
                     }
+                    result = encode_trades_with_schema_registry(&records);
                 },
                 _ => println!("no dict ")
             }
