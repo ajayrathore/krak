@@ -5,14 +5,14 @@ Avro binding for kdb+ using Rust.
 ## Building for Embedding
 
 ```
-~/rkdbavro(master ✗) cargo build --release && cp target/release/librkdbavro.dylib ${QHOME}/m64/librkdbavro.so
+~/krak(master ✗) cargo build --release && cp target/release/libkrak.dylib ${QHOME}/m64/libkrak.so
 ```
 
 Usage from q
 
 ```
-q)encode: `librkdbavro 2:(`encode_table;2)
-q)decode: `librkdbavro 2:(`decode_table;1)
+q)encode: `libkrak 2:(`encode_table;2)
+q)decode: `libkrak 2:(`decode_table;1)
 q)
 q)t:([]sid:10?100i; sym:string 10?`2;price:10?10f;size:10?100)
 q)t
