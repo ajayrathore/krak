@@ -13,6 +13,7 @@ lazy_static! {
         .unwrap());
 }
 
+
 #[no_mangle]
 pub extern "C" fn publish(tbl: *const K, rows: *const K) -> *const K {
     let payload = encode_table(tbl, rows);
