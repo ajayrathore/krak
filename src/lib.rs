@@ -11,12 +11,9 @@ pub mod receiver;
 
 
 mod tests {
-    use super::*;
-    use failure::_core::fmt::Error;
-    use avro_rs::types::Record;
-    use avro_rs::{Reader, from_value};
     use schema_registry_converter::schema_registry::{SuppliedSchema, post_schema};
     use crate::schema::RAW_SCHEMA;
+    use failure::_core::fmt::Error;
 
     #[test]
     fn test_post_schema_to_registry() -> Result<(), Error> {

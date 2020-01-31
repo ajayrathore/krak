@@ -1,12 +1,10 @@
 use kafka::consumer::{Consumer, FetchOffset, GroupOffsetStorage};
-use rkdb::kbindings::{kvoid, KVal, KData, kdict, kstring};
-use rkdb::types::{K, I};
+use rkdb::kbindings::{KVal, KData, kvoid, kdict};
+use rkdb::types::{K};
 use schema_registry_converter::Decoder;
 use std::{thread, ffi};
-use crate::schema::Trade;
-use avro_rs::from_value;
 use avro_rs::types::Value;
-use rkdb::k::{k, sd1, r0, kj, r1};
+use rkdb::k::k;
 
 #[no_mangle]
 pub extern "C" fn receiver_init(callback: *const K) -> *const K {
