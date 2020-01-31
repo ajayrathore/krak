@@ -1,5 +1,5 @@
 [package]
-name = "rkdbavro"
+name = "krak"
 version = "0.1.0"
 authors = ["Ajay Rathore <rathore.ajay@gmail.com>"]
 edition = "2018"
@@ -15,7 +15,7 @@ lazy_static = "1.4.0"
 
 
 [lib]
-name = "rkdbavro"
+name = "krak"
 crate-type = ["cdylib"]
 
 [profile.release]

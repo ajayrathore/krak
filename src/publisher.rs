@@ -15,8 +15,8 @@ lazy_static! {
 
 
 #[no_mangle]
-pub extern "C" fn publish(tbl: *const K, rows: *const K) -> *const K {
-    let payload = encode_table(tbl, rows);
+pub extern "C" fn publish(tbl: *const K, rows: *const K, colnames: *const K) -> *const K {
+    let payload = encode_table(tbl, rows, colnames);
     let mut records = Vec::new();
     for record in payload{
         records.push(Record::from_value("trades", record));
