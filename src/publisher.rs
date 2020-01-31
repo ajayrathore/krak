@@ -5,13 +5,23 @@ use std::time::Duration;
 use lazy_static::lazy_static;
 use std::sync::Mutex;
 use schema_registry_converter::schema_registry::{SuppliedSchema, post_schema};
+use std::env;
 
 lazy_static! {
-    static ref PRODUCER : Mutex<Producer> = Mutex::new(Producer::from_hosts(vec!("localhost:9092".to_owned()))
+    static ref PRODUCER : Mutex<Producer> = Mutex::new(Producer::from_hosts(vec!(get_kafka_broker().to_owned()))
         .with_ack_timeout(Duration::from_secs(1))
         .with_required_acks(RequiredAcks::One)
         .create()
         .unwrap());
+}
+
+
+fn get_kafka_broker() -> String {
+    let kafka_host = env::var("KAFKA_BROKER_HOST").expect("kafka host not defined");
+    let kafka_port = env::var("KAFKA_BROKER_PORT").expect("kafka port not defined");
+    let conn = kafka_host + ":" + &kafka_port;
+    println!("Using Kafka Broker : {}", conn);
+    conn
 }
 
 
