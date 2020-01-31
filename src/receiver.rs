@@ -53,7 +53,7 @@ pub extern "C" fn receiver_init(callback: *const K) -> *const K {
                         _ => println!("Did not receive a record")
                     }
                 }
-                consumer.consume_messageset(ms);
+                consumer.consume_messageset(ms).unwrap();
             }
             consumer.commit_consumed().unwrap();
         }
