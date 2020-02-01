@@ -54,6 +54,7 @@ pub extern "C" fn receiver_init(callback: *const K, topic: *const K, partitions:
                                     Value::Int(i) => { values.push(KVal::Int(KData::Atom(i)))},
                                     Value::Long(l) => {values.push(KVal::Long(KData::Atom(l)))},
                                     Value::Double(d) => {values.push(KVal::Float(KData::Atom(d)))},
+                                    Value::Boolean(b) => {values.push(KVal::Bool(KData::Atom(b)))},
                                     Value::String(s) => values.push(KVal::String(&s[0..])),
                                     _ => println!("Unrecognized type received")
                                 }

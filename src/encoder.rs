@@ -29,14 +29,15 @@ pub extern "C" fn encode_table(tbl: *const K, rows: *const K, colnames: *const K
                     let key = Box::leak(cnames[index].clone().into_boxed_str());
                     match col {
                         KVal::Int(KData::List(ic)) => record.push((key, Value::Int((ic)[i as usize]))),
+                        KVal::Float(KData::List(pc)) => record.push((key, Value::Double((pc)[i as usize]))),
+                        KVal::Long(KData::List(sc)) => record.push((key, Value::Long((sc)[i as usize]))),
+                        KVal::Bool(KData::List(bc)) => record.push((key, Value::Boolean((bc)[i as usize]))),
                         KVal::Mixed(symbols) => {
                             match symbols[i as usize] {
                                 KVal::String(syf) =>  record.push((key, Value::String(syf.parse().unwrap()))),
                                 _ => println!("No string symbol")
                             }
                         },
-                        KVal::Float(KData::List(pc)) => record.push((key, Value::Double((pc)[i as usize]))),
-                        KVal::Long(KData::List(sc)) => record.push((key, Value::Long((sc)[i as usize]))),
                         _ => println!("Unrecognized Col")
                     }
                 }
