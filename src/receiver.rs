@@ -1,3 +1,4 @@
+use crate::util::*;
 use kafka::consumer::{Consumer, FetchOffset, GroupOffsetStorage};
 use rkdb::kbindings::{KVal, KData, kvoid, kdict};
 use rkdb::types::{K};
@@ -5,6 +6,7 @@ use schema_registry_converter::Decoder;
 use std::{thread, ffi};
 use avro_rs::types::Value;
 use rkdb::k::k;
+
 
 #[no_mangle]
 pub extern "C" fn receiver_init(callback: *const K) -> *const K {
@@ -15,7 +17,7 @@ pub extern "C" fn receiver_init(callback: *const K) -> *const K {
     }
 
     let mut consumer : Consumer =
-        Consumer::from_hosts(vec!("localhost:9092".to_owned()))
+        Consumer::from_hosts(vec!(get_kafka_broker().to_owned()))
             .with_topic_partitions("trades".to_owned(), &[0])
             .with_fallback_offset(FetchOffset::Earliest)
             .with_offset_storage(GroupOffsetStorage::Kafka)
@@ -23,14 +25,13 @@ pub extern "C" fn receiver_init(callback: *const K) -> *const K {
             .create()
             .unwrap();
 
-    let mut decoder = Decoder::new("localhost:8081".to_string());
+    let mut decoder = Decoder::new(get_schema_registry().to_string());
 
     thread::spawn(move || {
         loop {
             for ms in consumer.poll().unwrap().iter() {
                 for m in ms.messages() {
                     let payload = decoder.decode(Some(&m.value)).unwrap();
-                    println!("Decoded : {:?}", payload);
                     match payload {
                         Value::Record(mut v) => {
                             let mut keys : Vec<String> = Vec::new();

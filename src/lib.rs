@@ -7,3 +7,4 @@ extern crate rkdb;
 pub mod encoder;
 pub mod publisher;
 pub mod receiver;
+pub mod util;
