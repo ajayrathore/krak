@@ -6,19 +6,32 @@ use schema_registry_converter::Decoder;
 use std::{thread, ffi};
 use avro_rs::types::Value;
 use rkdb::k::k;
+use std::convert::TryInto;
 
 
 #[no_mangle]
-pub extern "C" fn receiver_init(callback: *const K) -> *const K {
+pub extern "C" fn receiver_init(callback: *const K, topic: *const K, partitions: *const K) -> *const K {
     let mut cbk_func = String::new();
     match KVal::new(callback) {
         KVal::String(cbk) => cbk_func.push_str(cbk),
         _ => {println!("Invalid callback, pass function name as string"); return kvoid()}
     }
 
+    let mut tpc = String::new();
+    if let KVal::String(t) = KVal::new(topic) {
+        println!("topic received: {}", t);
+        tpc.push_str(t);
+    }
+
+    let mut parts: &mut [i32] = &mut [0];
+    if let KVal::Int(KData::List(p)) = KVal::new(partitions) {
+        println!("partitions received: {:?}", p);
+        parts = p;
+    }
+
     let mut consumer : Consumer =
         Consumer::from_hosts(vec!(get_kafka_broker().to_owned()))
-            .with_topic_partitions("trades".to_owned(), &[0])
+            .with_topic_partitions(tpc.to_owned(), parts)
             .with_fallback_offset(FetchOffset::Earliest)
             .with_offset_storage(GroupOffsetStorage::Kafka)
             .with_fetch_max_bytes_per_partition(1000012)
