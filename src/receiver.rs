@@ -6,7 +6,6 @@ use schema_registry_converter::Decoder;
 use std::{thread, ffi};
 use avro_rs::types::Value;
 use rkdb::k::k;
-use std::convert::TryInto;
 
 
 #[no_mangle]
