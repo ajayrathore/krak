@@ -58,3 +58,15 @@ price| 99.4
 size | 654
 
 ```
+
+Publishing schema from kdb
+```
+q)post : `libkrak 2:(`post_schema;2)
+q)
+q)json:.j.j `type`name`fields!(`record;`quote;flip(`name`type!(`id`sym`bid`ask;`int`string`double`double)))
+q)
+q)post["subjects/test-value/versions"; json]
+Using Schema Registry : localhost:8081
+schema posting to localhost:8081/subjects/test-value/versions
+Schema posted, Received Id: Ok((Record { name: Name { name: "quote", namespace: None, aliases: None }, doc: None, fields: [RecordField { name: "id", doc: None, default: None, schema: Int, order: Ascending, position: 0 }, RecordField { name: "sym", doc: None, default: None, schema: String, order: Ascending, position: 1 }, RecordField { name: "bid", doc: None, default: None, schema: Double, order: Ascending, position: 2 }, RecordField { name: "ask", doc: None, default: None, schema: Double, order: Ascending, position: 3 }], lookup: {"sym": 1, "bid": 2, "id": 0, "ask": 3} }, 3))
+```
