@@ -1,52 +1,72 @@
-# rkdb
+# krak
 
-Avro binding for kdb+ using Rust.
+Avro, kafka, schema_registry binding for kdb+ using Rust.
+This rust lib is intended to be loaded inside running q process and used for publishing and consuming avro encoded messages from a kafka broker, it also relies on confluence schema regitry for parsing the messages, more information can be found here https://docs.confluent.io/current/schema-registry/index.html
 
-## Building for Embedding
+This library utilies the existing kdb rust binding https://github.com/redsift/rkdb and various other rust libraries for integrating with avro, and kafka
+
+## Building On Mac
 
 ```
 ~/krak(master ✗) cargo build --release && cp target/release/libkrak.dylib ${QHOME}/m64/libkrak.so
 ```
 
-Usage from q
+# Usage from q
+Set up following envs
+
+* export KAFKA_BROKER_HOST=localhost
+* export KAFKA_BROKER_PORT=9092
+* export SCHEMA_REG_PORT=8081
+
+
+Publishing to kafka broker
 
 ```
-q)encode: `libkrak 2:(`encode_table;2)
-q)decode: `libkrak 2:(`decode_table;1)
+q)pub : `libkrak 2:(`publish;3)
 q)
-q)t:([]sid:10?100i; sym:string 10?`2;price:10?10f;size:10?100)
-q)t
-sid sym  price     size
------------------------
-77  "ci" 0.8388858 12
-30  "hk" 1.959907  10
-17  "ae" 3.75638   1
-23  "bl" 6.137452  90
-12  "oo" 5.294808  73
-66  "jg" 6.916099  90
-36  "cf" 2.296615  43
-37  "bp" 6.919531  90
-44  "ic" 4.707883  84
-28  "in" 6.346716  63
+q)t:([]id:10?100i;sym:string 10?`2;price:10?100f;size:10?100)  // symbols are not supported, pass as strings
+q)3#t
+id  sym  price    size
+----------------------
+77  "ci" 8.388858 12
+30  "hk" 19.59907 10
+17  "ae" 37.5638  1
 q)
-q)x:encode[t; `int$count t]
-q)x
-0x4f626a0104146176726f2e636f6465630e6465666c617465166176726f2e736368656d61ca027b2274797065223a227265636f7264222c226e616d65223a227472616465222c226669656c6473223a5b7b226e616d65223a22736964222c2274797065223a22696e74227d2c7b226e616d65223a2273796d222c2274797065223a22737472696e67227d2c7b226e616d65223a227072696365222c2274797065223a22646f75626c65227d2c7b226e616d65223a2273697a65222c2274797065223a226c6f6e67227d5d7d007102106f87ff7a03dbaf0e1ca8ea134114b40215ca310b01611807f0ff7b3d0303497775b2c8f25a980dea9e513e809441ee0df72267530693d1240b9351caa06c96dbf800061b9dcd97e06efefd76829406d894cfaf63d7c81b01c1f9d6fe396691ba3de0fdc9a4d26c54c81d032519ac6cbe089b7c3f7a5658b6782d96828603e07eb58ef908eba4fa40219c750c6e36c89d02fbf9f614538bb40212f2f5c8f24154494f006f9354395efc017102106f87ff7a03dbaf0e1ca8ea1341
+q)pub[t;`int$count t;string cols t]
+Using Kafka Broker : localhost:9092
+publish status = [ProduceConfirm { topic: "trades", partition_confirms: [ProducePartitionConfirm { offset: Ok(3212), partition: 0 }] }]
+
+```
+
+Consuming From kafka broker
+```
+q)receive : `libkrak 2:(`receiver_init;3)
+q)callback:{show "callback"; show x}      // callback received as dictionary
+q)receive["callback";"trades";enlist 0]
+topic received: trades
+Using Kafka Broker : localhost:9092
+Using Schema Registry : localhost:8081
+q)"callback"
+id   | 1i
+sym  | "msft"
+price| 22.4
+size | 786
+"callback"
+id   | 2i
+sym  | "hsbc"
+price| 99.4
+size | 654
+
+```
+
+Publishing schema from kdb
+```
+q)post : `libkrak 2:(`post_schema;2)
 q)
-q)decode[x]
-sid sym  price     size
------------------------
-77  "ci" 0.8388858 12
-30  "hk" 1.959907  10
-17  "ae" 3.75638   1
-23  "bl" 6.137452  90
-12  "oo" 5.294808  73
-66  "jg" 6.916099  90
-36  "cf" 2.296615  43
-37  "bp" 6.919531  90
-44  "ic" 4.707883  84
-28  "in" 6.346716  63
+q)json:.j.j `type`name`fields!(`record;`quote;flip(`name`type!(`id`sym`bid`ask;`int`string`double`double)))
 q)
-q)t ~ decode[x]
-1b
+q)post["subjects/test-value/versions"; json]
+Using Schema Registry : localhost:8081
+schema posting to localhost:8081/subjects/test-value/versions
+Schema posted, Received Id: Ok((Record { name: Name { name: "quote", namespace: None, aliases: None }, doc: None, fields: [RecordField { name: "id", doc: None, default: None, schema: Int, order: Ascending, position: 0 }, RecordField { name: "sym", doc: None, default: None, schema: String, order: Ascending, position: 1 }, RecordField { name: "bid", doc: None, default: None, schema: Double, order: Ascending, position: 2 }, RecordField { name: "ask", doc: None, default: None, schema: Double, order: Ascending, position: 3 }], lookup: {"sym": 1, "bid": 2, "id": 0, "ask": 3} }, 3))
 ```
