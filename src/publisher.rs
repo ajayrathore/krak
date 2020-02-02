@@ -5,7 +5,7 @@ use kafka::producer::{Producer, Record, RequiredAcks};
 use std::time::Duration;
 use lazy_static::lazy_static;
 use std::sync::Mutex;
-use schema_registry_converter::schema_registry::{SuppliedSchema, post_schema};
+use schema_registry_converter::schema_registry;
 
 
 lazy_static! {
@@ -30,14 +30,14 @@ pub extern "C" fn publish(tbl: *const K, rows: *const K, colnames: *const K) -> 
 }
 
 
-// from q
-//postschema["localhost:8081/subjects/quote-value/versions";.j.j `type`name`fields!(`record;`quote;flip(`name`type!(`sid`sym`bid`ask;`int`string`double`double)))]
 #[no_mangle]
-pub extern "C" fn postschema(sregurl: *const K, raw_schema: *const K) -> *const K {
+pub extern "C" fn post_schema(sregurl: *const K, raw_schema: *const K) -> *const K {
     if let KVal::String(url) = KVal::new(sregurl) {
         if let KVal::String(schema) = KVal::new(raw_schema) {
-            let schema = SuppliedSchema::new(String::from(schema));
-            let result = post_schema(url, schema);
+            let schema = schema_registry::SuppliedSchema::new(String::from(schema));
+            let furl = get_schema_registry() + "/" + url;
+            println!("schema posting to {}", furl);
+            let result = schema_registry::post_schema(furl.as_ref(), schema);
             println!("Schema posted, Received Id: {:?}", result);
         }
     }
