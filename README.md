@@ -14,9 +14,9 @@ This library utilies the existing kdb rust binding https://github.com/redsift/rk
 # Usage from q
 Set up following envs
 
-export KAFKA_BROKER_HOST=localhost
-export KAFKA_BROKER_PORT=9092
-export SCHEMA_REG_PORT=8081
+* export KAFKA_BROKER_HOST=localhost
+* export KAFKA_BROKER_PORT=9092
+* export SCHEMA_REG_PORT=8081
 
 
 Publishing to kafka broker
