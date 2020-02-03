@@ -1,7 +1,7 @@
 # krak
 
 Avro, kafka, schema_registry binding for kdb+ using Rust.
-This rust lib is intended to be loaded inside running q process and used for publishing and consuming avro encoded messages from a kafka broker, it also relies on confluence schema regitry for parsing the messages, more information can be found here https://docs.confluent.io/current/schema-registry/index.html
+This rust lib is intended to be loaded inside running q process and used for publishing and consuming avro encoded messages from a kafka broker, it also relies on confluent schema regitry for parsing the messages, more information can be found here https://docs.confluent.io/current/schema-registry/index.html
 
 This library utilies the existing kdb rust binding https://github.com/redsift/rkdb and various other rust libraries for integrating with avro, and kafka
 
