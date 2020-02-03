@@ -5,9 +5,10 @@ This rust lib is intended to be loaded inside running q process and used for pub
 
 This library utilies the existing kdb rust binding https://github.com/redsift/rkdb and various other rust libraries for integrating with avro, and kafka
 
-## Building On Mac
+## Building On Mac (use nightly channel)
 
 ```
+~/rustup default nightly
 ~/krak(master ✗) cargo build --release && cp target/release/libkrak.dylib ${QHOME}/m64/libkrak.so
 ```
 
