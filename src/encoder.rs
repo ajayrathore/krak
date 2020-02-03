@@ -43,7 +43,7 @@ pub extern "C" fn encode_table(tbl: *const K, rows: *const K, colnames: *const K
                 }
                 records.push(record);
             }
-            result = encode_trades_with_schema_registry(&records);
+            result = encode_from_schema_registry(&records);
         },
         _ => println!("No Table")
     };
@@ -51,7 +51,7 @@ pub extern "C" fn encode_table(tbl: *const K, rows: *const K, colnames: *const K
 }
 
 
-pub(crate) fn encode_trades_with_schema_registry(records: &Vec<Vec<(&'static str, Value)>>) -> Vec<Vec<u8>>  {
+pub(crate) fn encode_from_schema_registry(records: &Vec<Vec<(&'static str, Value)>>) -> Vec<Vec<u8>>  {
     let value_strategy = SubjectNameStrategy::TopicNameStrategy("trade".into(), false);
     let mut encoder = Encoder::new("localhost:8081".to_string());
     let mut bytes : Vec<Vec<u8>> = Vec::new();
