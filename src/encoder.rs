@@ -2,6 +2,7 @@ use rkdb::{kbindings::*, types::*};
 use schema_registry_converter::schema_registry::SubjectNameStrategy;
 use schema_registry_converter::Encoder;
 use avro_rs::types::Value;
+use crate::util::get_schema_registry;
 
 
 #[no_mangle]
@@ -53,7 +54,7 @@ pub extern "C" fn encode_table(tbl: *const K, rows: *const K, colnames: *const K
 
 pub(crate) fn encode_from_schema_registry(records: &Vec<Vec<(&'static str, Value)>>) -> Vec<Vec<u8>>  {
     let value_strategy = SubjectNameStrategy::TopicNameStrategy("trade".into(), false);
-    let mut encoder = Encoder::new("localhost:8081".to_string());
+    let mut encoder = Encoder::new(get_schema_registry());
     let mut bytes : Vec<Vec<u8>> = Vec::new();
     for record in records.iter(){
         let encoded = encoder.encode(record.to_vec(), &value_strategy);
