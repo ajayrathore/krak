@@ -1,6 +1,6 @@
 use crate::util::*;
 use kafka::consumer::{Consumer, FetchOffset, GroupOffsetStorage};
-use rkdb::kbindings::{KVal, KData, kvoid, kdict};
+use rkdb::kbindings::{KVal, KData, kvoid, kdict, kstring};
 use rkdb::types::{K};
 use schema_registry_converter::Decoder;
 use std::{thread, ffi};
@@ -43,6 +43,7 @@ pub extern "C" fn receiver_init(callback: *const K, topic: *const K, partitions:
         loop {
             for ms in consumer.poll().unwrap().iter() {
                 for m in ms.messages() {
+                    let key =  std::str::from_utf8(m.key).unwrap();
                     let payload = decoder.decode(Some(&m.value)).unwrap();
                     match payload {
                         Value::Record(mut v) => {
@@ -62,7 +63,7 @@ pub extern "C" fn receiver_init(callback: *const K, topic: *const K, partitions:
                             let kkeys = KVal::Symbol(KData::List(&mut keys));
                             let kvals = KVal::Mixed(values);
                             let kret = kdict(&kkeys, &kvals);
-                            unsafe { k(0, ffi::CString::new(cbk_func.as_bytes().to_vec()).unwrap().as_ptr(), kret, 0); }
+                            unsafe { k(0, ffi::CString::new(cbk_func.as_bytes().to_vec()).unwrap().as_ptr(), kstring(key), kret, 0); }
                         }
                         _ => println!("Did not receive a record")
                     }
