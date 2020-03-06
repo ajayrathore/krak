@@ -19,17 +19,22 @@ lazy_static! {
 
 
 #[no_mangle]
-pub extern "C" fn publish(msg_key: *const K, tbl: *const K, rows: *const K, colnames: *const K) -> *const K {
-    let payload = encode_table(tbl, rows, colnames);
+pub extern "C" fn publish(topic: *const K, msg_key: *const K, tbl: *const K, rows: *const K, colnames: *const K) -> *const K {
+    let payload = encode_table(topic, tbl, rows, colnames);
 
     let raw_key : RefCell<Vec<u8>> = RefCell::new(Vec::new());
     if let KVal::String(key) = KVal::new(msg_key) {
         raw_key.borrow_mut().clone_from(&key.as_bytes().to_vec());
-    }else { println!("Key should be string"); return kvoid()};
+    }
+
+    let mut tpc = String::new();
+    if let KVal::String(t) = KVal::new(topic) {
+        tpc.push_str(t);
+    }
 
     let mut records = Vec::new();
     for record in payload{
-        records.push(Record::from_key_value("trades", raw_key.clone().into_inner(),record));
+        records.push(Record::from_key_value(tpc.as_ref(), raw_key.clone().into_inner(), record));
     }
     let result = PRODUCER.lock().unwrap().send_all(&records).unwrap();
     println!("publish status = {:?}", result);

@@ -6,6 +6,12 @@ use schema_registry_converter::Decoder;
 use std::{thread, ffi};
 use avro_rs::types::Value;
 use rkdb::k::k;
+use lazy_static::lazy_static;
+use std::sync::Mutex;
+
+lazy_static! {
+    static ref DECODER : Mutex<Decoder> = Mutex::new(Decoder::new(get_schema_registry().to_string()));
+}
 
 
 #[no_mangle]
@@ -37,36 +43,13 @@ pub extern "C" fn receiver_init(callback: *const K, topic: *const K, partitions:
             .create()
             .unwrap();
 
-    let mut decoder = Decoder::new(get_schema_registry().to_string());
-
     thread::spawn(move || {
         loop {
             for ms in consumer.poll().unwrap().iter() {
                 for m in ms.messages() {
                     let key =  std::str::from_utf8(m.key).unwrap();
-                    let payload = decoder.decode(Some(&m.value)).unwrap();
-                    match payload {
-                        Value::Record(mut v) => {
-                            let mut keys : Vec<String> = Vec::new();
-                            let mut values : Vec<KVal> = Vec::new();
-                            for (k, v) in v.iter_mut(){
-                                keys.push(k.parse().unwrap());
-                                match v {
-                                    Value::Int(i) => { values.push(KVal::Int(KData::Atom(i)))},
-                                    Value::Long(l) => {values.push(KVal::Long(KData::Atom(l)))},
-                                    Value::Double(d) => {values.push(KVal::Float(KData::Atom(d)))},
-                                    Value::Boolean(b) => {values.push(KVal::Bool(KData::Atom(b)))},
-                                    Value::String(s) => values.push(KVal::String(&s[0..])),
-                                    _ => println!("Unrecognized type received")
-                                }
-                            }
-                            let kkeys = KVal::Symbol(KData::List(&mut keys));
-                            let kvals = KVal::Mixed(values);
-                            let kret = kdict(&kkeys, &kvals);
-                            unsafe { k(0, ffi::CString::new(cbk_func.as_bytes().to_vec()).unwrap().as_ptr(), kstring(key), kret, 0); }
-                        }
-                        _ => println!("Did not receive a record")
-                    }
+                    let kret = parse_msg(&m.value);
+                    unsafe { k(0, ffi::CString::new(cbk_func.as_bytes().to_vec()).unwrap().as_ptr(), kstring(key), kret, 0); }
                 }
                 consumer.consume_messageset(ms).unwrap();
             }
@@ -74,4 +57,43 @@ pub extern "C" fn receiver_init(callback: *const K, topic: *const K, partitions:
         }
     });
     kvoid()
+}
+
+
+#[no_mangle]
+pub extern "C" fn decode(msg: *const K) -> *const K {
+    let mut result = kvoid();
+    if let KVal::Byte(KData::List(m)) = KVal::new(msg) {
+        result = parse_msg(m);
+    }else {println!("MSG not a byte array")}
+    result
+}
+
+
+fn parse_msg(data: &[u8]) -> *const K {
+    let mut result = kvoid();
+    let payload = DECODER.lock().unwrap().decode(Some(data)).unwrap();
+    match payload {
+        Value::Record(mut v) => {
+            let mut keys: Vec<String> = Vec::new();
+            let mut values: Vec<KVal> = Vec::new();
+            for (k, v) in v.iter_mut() {
+                keys.push(k.parse().unwrap());
+                match v {
+                    Value::Int(i) => { values.push(KVal::Int(KData::Atom(i))) },
+                    Value::Long(l) => { values.push(KVal::Long(KData::Atom(l))) },
+                    Value::Double(d) => { values.push(KVal::Float(KData::Atom(d))) },
+                    Value::Boolean(b) => { values.push(KVal::Bool(KData::Atom(b))) },
+                    Value::String(s) => values.push(KVal::String(&s[0..])),
+                    _ => println!("Unrecognized type received")
+                }
+            }
+            let kkeys = KVal::Symbol(KData::List(&mut keys));
+            let kvals = KVal::Mixed(values);
+            let kret = kdict(&kkeys, &kvals);
+            result = kret;
+        }
+        _ => println!("Did not receive a record")
+    }
+    result
 }

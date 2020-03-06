@@ -6,10 +6,15 @@ use crate::util::get_schema_registry;
 
 
 #[no_mangle]
-pub extern "C" fn encode_table(tbl: *const K, rows: *const K, colnames: *const K) -> Vec<Vec<u8>> {
+pub extern "C" fn encode_table(topic: *const K, tbl: *const K, rows: *const K, colnames: *const K) -> Vec<Vec<u8>> {
     let mut result : Vec<Vec<u8>> = Vec::new();
     let mut nr = 0;
     let mut cnames:Vec<String> = Vec::new();
+    let mut tpc = String::new();
+    if let KVal::String(t) = KVal::new(topic) {
+        println!("topic received: {}", t);
+        tpc.push_str(t);
+    }
     match KVal::new(rows) {
         KVal::Int(KData::Atom(r)) => nr=*r,
         _ => println!("Invalid rows")
@@ -44,7 +49,7 @@ pub extern "C" fn encode_table(tbl: *const K, rows: *const K, colnames: *const K
                 }
                 records.push(record);
             }
-            result = encode_from_schema_registry(&records);
+            result = encode_from_schema_registry(tpc, &records);
         },
         _ => println!("No Table")
     };
@@ -52,8 +57,8 @@ pub extern "C" fn encode_table(tbl: *const K, rows: *const K, colnames: *const K
 }
 
 
-pub(crate) fn encode_from_schema_registry(records: &Vec<Vec<(&'static str, Value)>>) -> Vec<Vec<u8>>  {
-    let value_strategy = SubjectNameStrategy::TopicNameStrategy("trade".into(), false);
+fn encode_from_schema_registry(topic: String, records: &Vec<Vec<(&'static str, Value)>>) -> Vec<Vec<u8>>  {
+    let value_strategy = SubjectNameStrategy::TopicNameStrategy(topic, false);
     let mut encoder = Encoder::new(get_schema_registry());
     let mut bytes : Vec<Vec<u8>> = Vec::new();
     for record in records.iter(){
