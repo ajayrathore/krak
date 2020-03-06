@@ -17,13 +17,14 @@ Set up following envs
 
 * export KAFKA_BROKER_HOST=localhost
 * export KAFKA_BROKER_PORT=9092
+* export SCHEMA_REG_HOST=localhost
 * export SCHEMA_REG_PORT=8081
 
 
 Publishing to kafka broker
 
 ```
-q)pub : `libkrak 2:(`publish;4)
+q)pub : `libkrak 2:(`publish;5)
 q)
 q)t:([]id:10?100i;sym:string 10?`2;price:10?100f;size:10?100)  // symbols are not supported, pass as strings
 q)3#t
@@ -33,7 +34,7 @@ id  sym  price    size
 30  "hk" 19.59907 10
 17  "ae" 37.5638  1
 q)
-q)pub["mykey"; t; `int$count t; string cols t] // 4 params - key, table, row count, cols
+q)pub["trades"; "mykey"; t; `int$count t; string cols t] // 5 params - topic, msg key, table, row count, cols
 Using Kafka Broker : localhost:9092
 publish status = [ProduceConfirm { topic: "trades", partition_confirms: [ProducePartitionConfirm { offset: Ok(3212), partition: 0 }] }]
 ```
