@@ -11,8 +11,8 @@ pub fn get_kafka_broker() -> String {
 
 
 pub fn get_schema_registry() -> String {
-    let kafka_host = env::var("KAFKA_BROKER_HOST").expect("kafka host not defined");
+    let schema_reg_host = env::var("SCHEMA_REG_HOST").expect("schema reg host not defined");
     let schema_reg_port = env::var("SCHEMA_REG_PORT").expect("schema reg port not defined");
-    let conn = kafka_host + ":" + &schema_reg_port;
+    let conn = schema_reg_host + ":" + &schema_reg_port;
     conn
 }
