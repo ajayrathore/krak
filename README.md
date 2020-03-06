@@ -12,7 +12,7 @@ This library utilies the existing kdb rust binding https://github.com/redsift/rk
 ~/krak(master ✗) cargo build --release && cp target/release/libkrak.dylib ${QHOME}/m64/libkrak.so
 ```
 
-# Usage from q
+## Usage from q
 Set up following envs
 
 * export KAFKA_BROKER_HOST=localhost
@@ -67,7 +67,7 @@ schema posting to localhost:8081/subjects/test-value/versions
 Schema posted, Received Id: Ok((Record { name: Name { name: "quote", namespace: None, aliases: None }, doc: None, fields: [RecordField { name: "id", doc: None, default: None, schema: Int, order: Ascending, position: 0 }, RecordField { name: "sym", doc: None, default: None, schema: String, order: Ascending, position: 1 }, RecordField { name: "bid", doc: None, default: None, schema: Double, order: Ascending, position: 2 }, RecordField { name: "ask", doc: None, default: None, schema: Double, order: Ascending, position: 3 }], lookup: {"sym": 1, "bid": 2, "id": 0, "ask": 3} }, 3))
 ```
 
-# Also possible to use Kx official kafka consumer to receive avro encoded messages and you can use this library simply as a avro decoder via schema registry
+## Also possible to use Kx official kafka consumer to receive avro encoded messages and you can use this library simply as a avro decoder via schema registry
 
 ```
 q)decode: `libkrak 2:(`decode;1)
@@ -77,7 +77,7 @@ q)data:();
 q).kfk.consumecb:{[msg] data,: enlist msg`data}
 q).kfk.Sub[client;`trades;enlist .kfk.PARTITION_UA]
 q)
-q)q)decode each data
+q)decode each data
 id sym  price    size
 ---------------------
 77 "ci" 8.388858 12
