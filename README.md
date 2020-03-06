@@ -17,6 +17,7 @@ Set up following envs
 
 * export KAFKA_BROKER_HOST=localhost
 * export KAFKA_BROKER_PORT=9092
+* export SCHEMA_REG_HOST=localhost
 * export SCHEMA_REG_PORT=8081
 
 
