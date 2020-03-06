@@ -66,3 +66,28 @@ Using Schema Registry : localhost:8081
 schema posting to localhost:8081/subjects/test-value/versions
 Schema posted, Received Id: Ok((Record { name: Name { name: "quote", namespace: None, aliases: None }, doc: None, fields: [RecordField { name: "id", doc: None, default: None, schema: Int, order: Ascending, position: 0 }, RecordField { name: "sym", doc: None, default: None, schema: String, order: Ascending, position: 1 }, RecordField { name: "bid", doc: None, default: None, schema: Double, order: Ascending, position: 2 }, RecordField { name: "ask", doc: None, default: None, schema: Double, order: Ascending, position: 3 }], lookup: {"sym": 1, "bid": 2, "id": 0, "ask": 3} }, 3))
 ```
+
+# Also possible to use Kx official kafka consumer to receive avro encoded messages and you can use this library simply as a avro decoder via schema registry
+
+```
+q)decode: `libkrak 2:(`decode;1)
+q)\l kfk.q
+q)client:.kfk.Consumer[`metadata.broker.list`group.id!`localhost:9092`0]
+q)data:();
+q).kfk.consumecb:{[msg] data,: enlist msg`data}
+q).kfk.Sub[client;`trades;enlist .kfk.PARTITION_UA]
+q)
+q)q)decode each data
+id sym  price    size
+---------------------
+77 "ci" 8.388858 12
+30 "hk" 19.59907 10
+17 "ae" 37.5638  1
+23 "bl" 61.37452 90
+12 "oo" 52.94808 73
+66 "jg" 69.16099 90
+36 "cf" 22.96615 43
+37 "bp" 69.19531 90
+44 "ic" 47.07883 84
+28 "in" 63.46716 63
+```
