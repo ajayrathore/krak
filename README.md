@@ -41,9 +41,9 @@ publish status = [ProduceConfirm { topic: "trades", partition_confirms: [Produce
 
 Consuming From kafka broker
 ```
-q)receive : `libkrak 2:(`receiver_init;3)
+q)receive : `libkrak 2:(`receiver_init;4)
 q)callback:{[k;v] show "callback"; show k; show v}  // callback params - key(string), value(dictionary)
-q)receive["callback";"trades";enlist 0]  // params - callback func name, topic, list of partitions
+q)receive[0b; "callback";"trades";enlist 0]  // params - enum as int, callback func name, topic, list of partitions
 topic received: trades
 Using Kafka Broker : localhost:9092
 Using Schema Registry : localhost:8081
@@ -70,14 +70,14 @@ Schema posted, Received Id: Ok((Record { name: Name { name: "quote", namespace: 
 ## Also possible to use Kx official kafka consumer to receive avro encoded messages and you can use this library simply as a avro decoder via schema registry
 
 ```
-q)decode: `libkrak 2:(`decode;1)
+q)decode: `libkrak 2:(`decode;2)
 q)\l kfk.q
 q)client:.kfk.Consumer[`metadata.broker.list`group.id!`localhost:9092`0]
 q)data:();
 q).kfk.consumecb:{[msg] data,: enlist msg`data}
 q).kfk.Sub[client;`trades;enlist .kfk.PARTITION_UA]
 q)
-q)decode each data
+q)decode[0b] each data
 id sym  price    size
 ---------------------
 77 "ci" 8.388858 12
