@@ -15,7 +15,12 @@ lazy_static! {
 
 
 #[no_mangle]
-pub extern "C" fn receiver_init(callback: *const K, topic: *const K, partitions: *const K) -> *const K {
+pub extern "C" fn receiver_init(enumasint: *const K, callback: *const K, topic: *const K, partitions: *const K) -> *const K {
+    let mut easint  = false;
+    if let KVal::Bool(KData::Atom(b)) = KVal::new(enumasint) {
+        easint = b.to_owned();
+    }
+
     let mut cbk_func = String::new();
     match KVal::new(callback) {
         KVal::String(cbk) => cbk_func.push_str(cbk),
@@ -48,7 +53,7 @@ pub extern "C" fn receiver_init(callback: *const K, topic: *const K, partitions:
             for ms in consumer.poll().unwrap().iter() {
                 for m in ms.messages() {
                     let key =  std::str::from_utf8(m.key).unwrap();
-                    let kret = parse_msg(&m.value);
+                    let kret = parse_msg(&m.value, easint);
                     unsafe { k(0, ffi::CString::new(cbk_func.as_bytes().to_vec()).unwrap().as_ptr(), kstring(key), kret, 0); }
                 }
                 consumer.consume_messageset(ms).unwrap();
@@ -61,16 +66,20 @@ pub extern "C" fn receiver_init(callback: *const K, topic: *const K, partitions:
 
 
 #[no_mangle]
-pub extern "C" fn decode(msg: *const K) -> *const K {
+pub extern "C" fn decode(enumasint: *const K, msg: *const K) -> *const K {
     let mut result = kvoid();
+    let mut easint  = false;
+    if let KVal::Bool(KData::Atom(b)) = KVal::new(enumasint) {
+        easint = b.to_owned();
+    }
     if let KVal::Byte(KData::List(m)) = KVal::new(msg) {
-        result = parse_msg(m);
+        result = parse_msg(m, easint);
     }else {println!("MSG not a byte array")}
     result
 }
 
 
-fn parse_msg(data: &[u8]) -> *const K {
+fn parse_msg(data: &[u8], enumasint: bool) -> *const K {
     let mut result = kvoid();
     let payload = DECODER.lock().unwrap().decode(Some(data)).unwrap();
     match payload {
@@ -82,9 +91,23 @@ fn parse_msg(data: &[u8]) -> *const K {
                 match v {
                     Value::Int(i) => { values.push(KVal::Int(KData::Atom(i))) },
                     Value::Long(l) => { values.push(KVal::Long(KData::Atom(l))) },
+                    Value::Float(f) => { values.push(KVal::Real(KData::Atom(f))) },
                     Value::Double(d) => { values.push(KVal::Float(KData::Atom(d))) },
                     Value::Boolean(b) => { values.push(KVal::Bool(KData::Atom(b))) },
                     Value::String(s) => values.push(KVal::String(&s[0..])),
+                    Value::Enum(i, s) =>
+                        if enumasint
+                            { values.push(KVal::Int(KData::Atom(i))) }
+                        else
+                            {values.push(KVal::String(&s[0..]))},
+                    Value::Union(box u) => match u {
+                        Value::Double(d) => { values.push(KVal::Float(KData::Atom(d))) },
+                        Value::Long(l) => { values.push(KVal::Long(KData::Atom(l))) },
+                        Value::Float(f) => { values.push(KVal::Real(KData::Atom(f))) },
+                        Value::Int(i) => { values.push(KVal::Int(KData::Atom(i))) },
+                        Value::Null => values.push(KVal::String("null")),
+                        _ => println!("Unrecognized union type received")
+                    }
                     _ => println!("Unrecognized type received")
                 }
             }
