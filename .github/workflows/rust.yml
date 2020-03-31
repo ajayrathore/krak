@@ -9,6 +9,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: rust update
+      run: rustup update
     - name: Switch to Nightly
       run: rustup default nightly
     - name: Build
