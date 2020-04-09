@@ -87,6 +87,8 @@ fn parse_msg(data: &[u8], enumasint: bool) -> *const K {
             let mut keys: Vec<String> = Vec::new();
             let mut values: Vec<KVal> = Vec::new();
             for (k, v) in v.iter_mut() {
+                println!("Key    = {:?}", k);
+                println!("Value  = {:?}", v);
                 keys.push(k.parse().unwrap());
                 match v {
                     Value::Int(i) => { values.push(KVal::Int(KData::Atom(i))) },
