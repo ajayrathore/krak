@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 rkdb = "0.4.0"
-avro-rs = "0.6"
+avro-rs = "0.7.0"
 schema_registry_converter = { git = "https://github.com/gklijs/schema_registry_converter" }
 kafka = "0.8.0"
 failure = "0.1.5"
