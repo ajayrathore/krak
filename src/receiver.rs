@@ -121,7 +121,7 @@ fn parse_msgtype(val: &mut Value, enumasint: bool) -> KVal {
             if enumasint
                 { KVal::Int(KData::Atom(i))}
             else
-                {KVal::String(&s[0..])},
+                {KVal::Symbol(KData::Atom(s))},
         Value::Union(box u) => parse_msgtype(u, enumasint),
         Value::Record(records) => {
             let mut keys: Vec<KVal> = Vec::new();
