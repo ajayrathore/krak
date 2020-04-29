@@ -91,26 +91,10 @@ fn parse_msg(data: &[u8], enumasint: bool) -> *const K {
                 println!("Value  = {:?}", v);
                 keys.push(k.parse().unwrap());
                 match v {
-                    Value::Int(i) => { values.push(KVal::Int(KData::Atom(i))) },
-                    Value::Long(l) => { values.push(KVal::Long(KData::Atom(l))) },
-                    Value::Float(f) => { values.push(KVal::Real(KData::Atom(f))) },
-                    Value::Double(d) => { values.push(KVal::Float(KData::Atom(d))) },
-                    Value::Boolean(b) => { values.push(KVal::Bool(KData::Atom(b))) },
-                    Value::String(s) => values.push(KVal::String(&s[0..])),
-                    Value::Enum(i, s) =>
-                        if enumasint
-                            { values.push(KVal::Int(KData::Atom(i))) }
-                        else
-                            {values.push(KVal::String(&s[0..]))},
-                    Value::Union(box u) => match u {
-                        Value::Double(d) => { values.push(KVal::Float(KData::Atom(d))) },
-                        Value::Long(l) => { values.push(KVal::Long(KData::Atom(l))) },
-                        Value::Float(f) => { values.push(KVal::Real(KData::Atom(f))) },
-                        Value::Int(i) => { values.push(KVal::Int(KData::Atom(i))) },
-                        Value::Null => values.push(KVal::String("null")),
-                        _ => println!("Unrecognized union type received")
-                    }
-                    _ => println!("Unrecognized type received")
+                    Value::Array(arr) => for a in arr.into_iter() {
+                      values.push(parse_msgtype(a, enumasint));
+                    },
+                    _ => values.push(parse_msgtype(v, enumasint))
                 }
             }
             let kkeys = KVal::Symbol(KData::List(&mut keys));
@@ -121,4 +105,41 @@ fn parse_msg(data: &[u8], enumasint: bool) -> *const K {
         _ => println!("Did not receive a record")
     }
     result
+}
+
+
+fn parse_msgtype(val: &mut Value, enumasint: bool) -> KVal {
+    match val {
+        Value::Int(i) => KVal::Int(KData::Atom(i)),
+        Value::Long(l) => KVal::Long(KData::Atom(l)),
+        Value::Float(f) => KVal::Real(KData::Atom(f)),
+        Value::Double(d) => KVal::Float(KData::Atom(d)),
+        Value::Boolean(b) => KVal::Bool(KData::Atom(b)),
+        Value::String(s) => KVal::String(&s[0..]),
+        Value::Enum(i, s) =>
+            if enumasint
+                { KVal::Int(KData::Atom(i))}
+            else
+                {KVal::String(&s[0..])},
+        Value::Union(box u) => parse_msgtype(u, enumasint),
+        Value::Record(records) => {
+            let mut keys: Vec<KVal> = Vec::new();
+            let mut values: Vec<KVal> = Vec::new();
+            for (key, val) in records.into_iter() {
+                keys.push(KVal::Symbol(KData::Atom(key)));
+                values.push(parse_msgtype(val, enumasint));
+            }
+            KVal::Dict(Box::new(KVal::Mixed(keys)), Box::new(KVal::Mixed(values)))
+        },
+        Value::Map(map) => {
+            let mut keys: Vec<KVal> = Vec::new();
+            let mut values: Vec<KVal> = Vec::new();
+            for (key, val) in map.into_iter() {
+                keys.push(KVal::String(key));
+                values.push(parse_msgtype(val, enumasint));
+            }
+            KVal::Dict(Box::new(KVal::Mixed(keys)), Box::new(KVal::Mixed(values)))
+        },
+        _ => {println!("Unrecognized msg field received"); KVal::Unknown}
+    }
 }
