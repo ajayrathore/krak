@@ -13,6 +13,8 @@ jobs:
       run: rustup update
     - name: Switch to Nightly
       run: rustup default nightly
+    - name: avro-rs 
+      run: cargo update -p avro-rs:0.9.0 --precise 0.7.0
     - name: Build
       run: cargo build --verbose
     - name: Run tests
