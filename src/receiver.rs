@@ -116,6 +116,7 @@ fn parse_msgtype(val: &mut Value, enumasint: bool) -> KVal {
         Value::Double(d) => KVal::Float(KData::Atom(d)),
         Value::Boolean(b) => KVal::Bool(KData::Atom(b)),
         Value::String(s) => KVal::String(&s[0..]),
+        Value::Null => KVal::String("null"),
         Value::Enum(i, s) =>
             if enumasint
                 { KVal::Int(KData::Atom(i))}
