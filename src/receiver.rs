@@ -91,8 +91,12 @@ fn parse_msg(data: &[u8], enumasint: bool) -> *const K {
                 println!("Value  = {:?}", v);
                 keys.push(k.parse().unwrap());
                 match v {
-                    Value::Array(arr) => for a in arr.into_iter() {
-                      values.push(parse_msgtype(a, enumasint));
+                    Value::Array(arr) => {
+                        let mut rows: Vec<KVal> = Vec::new();
+                        for a in arr.into_iter() {
+                            rows.push(parse_msgtype(a, enumasint));
+                        };
+                        values.push(KVal::Mixed(rows));
                     },
                     _ => values.push(parse_msgtype(v, enumasint))
                 }
