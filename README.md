@@ -106,31 +106,12 @@ q)encode : `libkrak 2:(`encode;4)
 q)decode: `libkrak 2:(`decode;2)
 q)
 q)x:encode["trade"; t; `int$count t; string cols t]
-topic received: trade
-Using Schema Registry : http://localhost:8081
-encoded bytes : [Byte(List([0, 0, 0, 0, 2, 34, 4, 107, 108, 0, 0, 0, 0, 128, 135, 195, 64, 0, 0, 176, 223, 232, 66, 66, 64])), Byte(List([0, 0, 0, 0, 2, 182, 1, 4, 101, 112, 0, 0, 0, 0, 128, 135, 195, 64, 0, 0, 123, 109, 90, 250, 87, 64]))]
 q)
 q)x
 0x000000000222046b6c000000008087c3400000b0dfe8424240
 0x0000000002b601046570000000008087c34000007b6d5afa5740
 q)
 q)t ~ decode[1b] each x
-Key    = "id"
-Value  = Int(17)
-Key    = "sym"
-Value  = String("kl")
-Key    = "price"
-Value  = Double(9999.0)
-Key    = "size"
-Value  = Double(36.522731743752956)
-Key    = "id"
-Value  = Int(91)
-Key    = "sym"
-Value  = String("ep")
-Key    = "price"
-Value  = Double(9999.0)
-Key    = "size"
-Value  = Double(95.9117692662403)
 1b
 ```
 
