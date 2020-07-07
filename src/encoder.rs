@@ -6,6 +6,18 @@ use crate::util::get_schema_registry;
 
 
 #[no_mangle]
+pub extern "C" fn encode(topic: *const K, tbl: *const K, rows: *const K, colnames: *const K) -> *const K {
+    let mut data = encode_table(topic, tbl, rows, colnames);
+    let mut result: Vec<KVal> = Vec::new();
+    for row in data.iter_mut() {
+        result.push(KVal::Byte(KData::List(row)));
+    }
+    let kret = kmixed(&result);
+    kret
+}
+
+
+#[no_mangle]
 pub extern "C" fn encode_table(topic: *const K, tbl: *const K, rows: *const K, colnames: *const K) -> Vec<Vec<u8>> {
     let mut result : Vec<Vec<u8>> = Vec::new();
     let mut nr = 0;
