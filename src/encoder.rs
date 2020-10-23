@@ -18,6 +18,7 @@ pub extern "C" fn encode(topic: *const K, tbl: *const K, rows: *const K, colname
 
 
 #[no_mangle]
+#[allow(improper_ctypes_definitions)]
 pub extern "C" fn encode_table(topic: *const K, tbl: *const K, rows: *const K, colnames: *const K) -> Vec<Vec<u8>> {
     let mut result : Vec<Vec<u8>> = Vec::new();
     let mut nr = 0;
