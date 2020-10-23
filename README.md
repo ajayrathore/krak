@@ -130,3 +130,4 @@ This error is related to krak depending on a particual version of avro-rs (0.7),
 ```
 cargo update -p avro-rs:0.9.0 --precise 0.7.0
 ```
+replace 0.9.0 with whatever latest version is being pulled by cargo
