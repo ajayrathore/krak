@@ -1,20 +1,26 @@
 use crate::encoder::*;
 use crate::util::*;
 use rkdb::{kbindings::*, types::*};
-use kafka::producer::{Producer, Record, RequiredAcks};
 use std::time::Duration;
 use lazy_static::lazy_static;
 use std::sync::Mutex;
 use schema_registry_converter::schema_registry;
 use failure::_core::cell::RefCell;
+use rdkafka::config::ClientConfig;
+use rdkafka::producer::{Producer, BaseProducer, BaseRecord};
 
 
 lazy_static! {
-    static ref PRODUCER : Mutex<Producer> = Mutex::new(Producer::from_hosts(vec!(get_kafka_broker().to_owned()))
-        .with_ack_timeout(Duration::from_secs(1))
-        .with_required_acks(RequiredAcks::One)
-        .create()
-        .unwrap());
+    static ref PRODUCER : Mutex<BaseProducer> = Mutex::new(ClientConfig::new()
+                                                            .set("metadata.broker.list", "localhost")
+                                                            .set("security.protocol", "sasl_plaintext")
+                                                            .set("sasl.kerberos.kinit.cmd", ":")
+                                                            .set("sasl.mechanism", "GSSAPI")
+                                                            .set("queue.buffering.max.kbytes", "1000000")
+                                                            .set("acks", "1")
+                                                            .create()
+                                                            .expect("Producer creation error")
+                                                          );
 }
 
 
@@ -32,12 +38,15 @@ pub extern "C" fn publish(topic: *const K, msg_key: *const K, tbl: *const K, row
         tpc.push_str(t);
     }
 
-    let mut records = Vec::new();
     for record in payload{
-        records.push(Record::from_key_value(tpc.as_ref(), raw_key.clone().into_inner(), record));
+        println!("publishing payload ", record.);
+        PRODUCER.lock().unwrap().send(BaseRecord::to(&tpc)
+                                                  .key(&raw_key.clone().into_inner())
+                                                  .payload(&record)
+                                     ).expect("Failed to enqueue");
     }
-    let result = PRODUCER.lock().unwrap().send_all(&records).unwrap();
-    println!("publish status = {:?}", result);
+    PRODUCER.lock().unwrap().flush(Duration::from_secs(1));
+    println!("flushed");
     kvoid()
 }
 
